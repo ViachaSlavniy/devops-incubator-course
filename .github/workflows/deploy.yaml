@@ -1,24 +1,28 @@
-name: CI-Pipeline
+name: Deploy
 
 on:
   push:
     branches: [main]
 
 jobs:
-  build:
+  checks:
+    uses: ./.github/workflows/pr-check.yaml
+
+  deploy:
+    needs: checks
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Dependencies
-        run: npm ci
-      - name: Lint
-        run: npm run lint
-      - name: Test
-        run: npm run test
-      - name: Login to Docker Hub
-        run: echo "${{secrets.DOCKER_PASS}}" | docker login -u ${{secrets.DOCKER_USER}} --password-stdin
-      - name: Build Docker Image
-        run: docker build -t ${{secrets.DOCKER_USER}}/my-node-app:${{github.sha}} .
-      - name: Push to Docker Hub
-        run: docker push ${{secrets.DOCKER_USER}}/my-node-app:${{github.sha}}
+      - name: Деплой с использованием SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/myapp/backend
+            git pull origin main
+            cd /var/www/myapp
+            docker compose up --build -d backend
+
+
