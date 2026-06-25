@@ -1,18 +1,19 @@
 name: Check PR
 
 on:
+  workflow_call:
   pull_request:
     branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
-      - name: dependencies
+      - name: Установка зависимостей
         run: npm ci
-      - name: lint
+      - name: Линтинг
         run: npm run lint
-      - name: test
+      - name: Тесты
         run: npm run test
